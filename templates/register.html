@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+
+<h2>Register</h2>
+
+<form method="POST" action="/register">
+
+    Username:<br>
+    <input type="text" name="username" required><br><br>
+
+    Password:<br>
+    <input type="password" name="password" required><br><br>
+
+    Role:<br>
+    <select name="role">
+        <option value="student">Student</option>
+        <option value="company">Company</option>
+    </select><br><br>
+
+    Name:<br>
+    <input type="text" name="name" required><br><br>
+
+    Department (for students):<br>
+    <input type="text" name="department"><br><br>
+
+    Description (for companies):<br>
+    <input type="text" name="description"><br><br>
+
+    <button type="submit">Register</button>
+
+</form>
+
+</body>
+</html>

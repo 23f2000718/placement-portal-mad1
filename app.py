@@ -1,4 +1,4 @@
-from flask import Flask, request, session, redirect, url_for
+from flask import Flask, request, session, redirect, url_for, render_template
 from models import db, User, Student, Company
 
 app = Flask(__name__)
@@ -10,6 +10,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database with app
 db.init_app(app)
+
+@app.route("/")
+def home():
+    return "Placement Portal Backend Running"
+
+@app.route("/login", methods=["GET"])
+def login_page():
+    return render_template("login.html")
+
+@app.route("/register", methods=["GET"])
+def register_page():
+    return render_template("register.html")
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -97,7 +109,7 @@ def admin_dashboard():
     if session.get("role") != "admin":
         return "Access Denied"
 
-    return "Welcome Admin"
+    return render_template("admin_dashboard.html")
 
 @app.route("/company_dashboard")
 def company_dashboard():
@@ -121,6 +133,53 @@ def student_dashboard():
 
     return "Welcome Student"
 
+@app.route("/admin/companies")
+def view_companies():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "admin":
+        return "Access Denied"
+
+    companies = Company.query.all()
+
+    return render_template("admin_companies.html", companies=companies)
+
+@app.route("/admin/approve_company/<int:company_id>")
+def approve_company(company_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "admin":
+        return "Access Denied"
+
+    company = Company.query.get(company_id)
+
+    company.status = "approved"
+
+    db.session.commit()
+
+    return redirect("/admin/companies")
+
+@app.route("/admin/blacklist_company/<int:company_id>")
+def blacklist_company(company_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "admin":
+        return "Access Denied"
+
+    company = Company.query.get(company_id)
+
+    company.status = "blacklisted"
+
+    db.session.commit()
+
+    return redirect("/admin/companies")
+
 @app.route("/logout")
 def logout():
 
@@ -132,15 +191,15 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
 
-    # Create default admin if not exists
-    admin = User.query.filter_by(username="admin").first()
+        # Create default admin if not exists
+        admin = User.query.filter_by(username="admin").first()
 
-    if not admin:
-        admin_user = User(
-            username="admin",
-            password="admin123",
-            role="admin"
-        )
-        db.session.add(admin_user)
-        db.session.commit()
+        if not admin:
+            admin_user = User(
+                username="admin",
+                password="admin123",
+                role="admin"
+            )
+            db.session.add(admin_user)
+            db.session.commit()
     app.run(debug=True)
