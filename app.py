@@ -1,5 +1,5 @@
 from flask import Flask, request, session, redirect, url_for, render_template
-from models import db, User, Student, Company
+from models import db, User, Student, Company, Drive
 
 app = Flask(__name__)
 app.secret_key = "placement_portal_secret"
@@ -120,7 +120,7 @@ def company_dashboard():
     if session.get("role") != "company":
         return "Access Denied"
 
-    return "Welcome Company"
+    return render_template("company_dashboard.html")
 
 @app.route("/student_dashboard")
 def student_dashboard():
@@ -179,6 +179,60 @@ def blacklist_company(company_id):
     db.session.commit()
 
     return redirect("/admin/companies")
+
+@app.route("/company/create_drive", methods=["GET"])
+def create_drive_page():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "company":
+        return "Access Denied"
+
+    return render_template("create_drive.html")
+
+@app.route("/company/create_drive", methods=["POST"])
+def create_drive():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "company":
+        return "Access Denied"
+
+    job_title = request.form.get("job_title")
+    job_description = request.form.get("job_description")
+    application_deadline = request.form.get("application_deadline")
+
+    # Find the company linked to this logged-in user
+    company = Company.query.filter_by(user_id=session["user_id"]).first()
+
+    new_drive = Drive(
+        job_title=job_title,
+        job_description=job_description,
+        application_deadline=application_deadline,
+        company_id=company.id
+    )
+
+    db.session.add(new_drive)
+    db.session.commit()
+
+    return "Drive created successfully"
+
+@app.route("/company/drives")
+def company_drives():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "company":
+        return "Access Denied"
+
+    company = Company.query.filter_by(user_id=session["user_id"]).first()
+
+    drives = Drive.query.filter_by(company_id=company.id).all()
+
+    return render_template("company_drives.html", drives=drives)
 
 @app.route("/logout")
 def logout():
